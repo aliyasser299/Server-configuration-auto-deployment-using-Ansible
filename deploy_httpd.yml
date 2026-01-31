@@ -1,0 +1,35 @@
+- name: Deploy Apache HTTP server and website on CentOS
+  hosts: centos_clients
+  become: yes
+
+  tasks:
+
+    - name: Install Apache (httpd)
+      yum:
+        name: httpd
+        state: present
+
+    - name: Ensure Apache is enabled and started
+      service:
+        name: httpd
+        state: started
+        enabled: yes
+
+    - name: Deploy website index.html
+      copy:
+        src: /etc/ansible/files/index.html
+        dest: /var/www/html/index.html
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Open port 80 in firewalld
+      firewalld:
+        port: 80/tcp
+        permanent: yes
+        state: enabled
+      when: ansible_facts['os_family'] == "RedHat"
+
+    - name: Reload firewalld
+      command: firewall-cmd --reload
+      when: ansible_facts['os_family'] == "RedHat"
